@@ -2,13 +2,15 @@
 
 Estimator of take-home pay for a full-time, open-ended private-sector employee in Milan. Enter a RAL; the rest of the scenario is fixed (13 months, no dependents, no extra deductions).
 
-This copy is **not public**. Access is managed from the Origin repo page.
+This copy is **not public**. Access is managed from the [Origin repo page](https://cursor.com/codebase/holograndma/RAL-netto-app).
 
 ## Open in one click
 
-After this repo is on Origin, the README on the Code tab is the landing page. Use **Open in Cursor** there (link added after the remote exists), then **Run and Debug → View stipendio netto** (or `F5`) to launch the app in the browser.
+[Open in Cursor](cursor://vscode.git/clone?url=https://origin.cursor.com/holograndma/RAL-netto-app.git)
 
-Locally:
+That clones this repo into Cursor. Then **Run and Debug → View stipendio netto** (or `F5`) to launch the app in the browser.
+
+## Run locally
 
 ```bash
 ./run.sh
