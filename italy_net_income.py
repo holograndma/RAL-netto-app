@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stima dello stipendio netto 2026 per un dipendente del settore privato a Milano.
+"""Stima dello stipendio netto 2025 per un dipendente del settore privato a Milano.
 
 Ipotesi:
 - Tempo pieno, contratto a tempo indeterminato, residente a Milano
@@ -14,26 +14,28 @@ Stima indicativa, non consulenza fiscale.
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import sys
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP
+from pathlib import Path
 
 ZERO = Decimal("0.00")
 CENT = Decimal("0.01")
 FOUR_DP = Decimal("0.0001")
 MONTHS = 13
 
-# INPS 2026 (Circolare INPS n. 6/2026 and n. 27/2026)
+# INPS 2025 (Circolare INPS n. 26/2025)
 INPS_EMPLOYEE_RATE = Decimal("0.0919")
 INPS_EXTRA_RATE = Decimal("0.01")
-INPS_MASSIMALE = Decimal("122295")
-INPS_PRIMA_FASCIA = Decimal("56224")
+INPS_MASSIMALE = Decimal("120607")
+INPS_PRIMA_FASCIA = Decimal("55448")
 
-# IRPEF 2026 — art. 11 TUIR as amended by L. 199/2025 art. 1 c. 3
+# IRPEF 2025 — art. 11 TUIR as amended by L. 207/2024 art. 1 c. 2
 IRPEF_BRACKETS = (
     (Decimal("28000"), Decimal("0.23")),
-    (Decimal("50000"), Decimal("0.33")),
+    (Decimal("50000"), Decimal("0.35")),
     (None, Decimal("0.43")),
 )
 
@@ -69,20 +71,17 @@ CUNEO_PCT_LOW = Decimal("0.071")
 CUNEO_PCT_MID = Decimal("0.053")
 CUNEO_PCT_HIGH = Decimal("0.048")
 
-# Lombardy regional surcharge 2026 (MEF)
-LOMBARDY_BRACKETS = (
-    (Decimal("15000"), Decimal("0.0123")),
-    (Decimal("28000"), Decimal("0.0158")),
-    (Decimal("50000"), Decimal("0.0172")),
-    (None, Decimal("0.0173")),
-)
-
-# Milan municipal surcharge (Comune di Milano: 0.80%, exemption ≤ €23,000)
-MILAN_RATE = Decimal("0.008")
-MILAN_EXEMPTION = Decimal("23000")
-
 # Art. 50 D.Lgs. 446/1997; Circolare 3/E/1998: addizionali not due if net IRPEF ≤ €12
 IRPEF_MIN_DUE = Decimal("12")
+ADDIZIONALI_PATH = Path(__file__).resolve().parent / "docs" / "addizionali-2025.json"
+_ADDIZIONALI: dict | None = None
+
+
+def load_addizionali() -> dict:
+    global _ADDIZIONALI
+    if _ADDIZIONALI is None:
+        _ADDIZIONALI = json.loads(ADDIZIONALI_PATH.read_text(encoding="utf-8"))
+    return _ADDIZIONALI
 
 
 def euro(value: Decimal | int | str) -> Decimal:
@@ -184,14 +183,32 @@ def trattamento_integrativo(
     return ZERO
 
 
-def lombardy_surcharge(imponibile: Decimal) -> Decimal:
-    return euro(tax_on_brackets(imponibile, LOMBARDY_BRACKETS))
+def resolve_location(region_id: str, city_id: str) -> tuple[dict, dict]:
+    table = load_addizionali()
+    region = next((item for item in table["regions"] if item["id"] == region_id), None)
+    if region is None:
+        raise ValueError("Seleziona una regione")
+    city = next(
+        (item for item in table["cities"].get(region_id, []) if item["id"] == city_id),
+        None,
+    )
+    if city is None:
+        raise ValueError("Seleziona un comune della regione")
+    return region, city
 
 
-def milan_surcharge(imponibile: Decimal) -> Decimal:
-    if imponibile <= MILAN_EXEMPTION:
+def surcharge_from_spec(imponibile: Decimal, spec: dict) -> Decimal:
+    exemption = euro(spec.get("e") or 0)
+    if exemption > 0 and imponibile <= exemption:
         return ZERO
-    return euro(imponibile * MILAN_RATE)
+    brackets = tuple(
+        (
+            None if upper is None else Decimal(str(upper)),
+            Decimal(str(percent)) / Decimal("100"),
+        )
+        for upper, percent in spec["b"]
+    )
+    return euro(tax_on_brackets(imponibile, brackets))
 
 
 @dataclass(frozen=True)
@@ -220,11 +237,19 @@ class NetIncome:
     cuneo_bonus: Decimal
     net_annual: Decimal
     net_monthly: Decimal
+    region_name: str
+    city_name: str
+    city_star: bool
 
 
-def calculate_net(ral: Decimal) -> NetIncome:
+def calculate_net(
+    ral: Decimal,
+    region_id: str = "Lombardia",
+    city_id: str = "F205",
+) -> NetIncome:
     if ral <= 0:
         raise ValueError("La RAL deve essere positiva")
+    region, city = resolve_location(region_id, city_id)
 
     inps = employee_inps(ral)
     imponibile = euro(ral - inps)
@@ -239,8 +264,8 @@ def calculate_net(ral: Decimal) -> NetIncome:
         irpef_netta = ZERO
 
     if irpef_netta > IRPEF_MIN_DUE:
-        regionale = lombardy_surcharge(imponibile)
-        comunale = milan_surcharge(imponibile)
+        regionale = surcharge_from_spec(imponibile, region)
+        comunale = surcharge_from_spec(imponibile, city)
     else:
         regionale = ZERO
         comunale = ZERO
@@ -264,6 +289,9 @@ def calculate_net(ral: Decimal) -> NetIncome:
         cuneo_bonus=cuneo_bonus,
         net_annual=net_annual,
         net_monthly=euro(net_annual / MONTHS),
+        region_name=region["n"],
+        city_name=city["n"],
+        city_star=bool(city.get("star")),
     )
 
 
@@ -310,13 +338,13 @@ def breakdown_rows(result: NetIncome) -> list[BreakdownRow]:
         ),
         BreakdownRow("IRPEF netta", result.irpef_netta, -result.irpef_netta, True),
         BreakdownRow(
-            "Addizionale regionale Lombardia",
+            f"Addizionale regionale {result.region_name}",
             None,
             -result.addizionale_regionale,
             True,
         ),
         BreakdownRow(
-            "Addizionale comunale Milano",
+            f"Addizionale comunale {result.city_name}",
             None,
             -result.addizionale_comunale,
             True,
@@ -392,7 +420,7 @@ def render(result: NetIncome) -> str:
         f"{'Trattenute':>{AMOUNT_W}}  {'% sul lordo':>{PCT_W}}"
     )
     lines = [
-        "Stipendio netto 2026 — Dipendente settore privato, Milano",
+        f"Stipendio netto 2025 — Dipendente settore privato, {result.city_name}",
         "Ipotesi: 13 mensilità, nessun familiare a carico, nessuna altra detrazione",
         "",
         header,
@@ -430,7 +458,12 @@ def _pretty_step(raw: Decimal) -> Decimal:
     return euro(Decimal(str(magnitude * 10)))
 
 
-def comparison_curve(center: Decimal, sides: int = 5) -> list[dict[str, float | str | bool]]:
+def comparison_curve(
+    center: Decimal,
+    region_id: str = "Lombardia",
+    city_id: str = "F205",
+    sides: int = 5,
+) -> list[dict[str, float | str | bool]]:
     """Net pay points with the chosen RAL in the middle of the series."""
     step = _pretty_step(center * Decimal("0.08"))
     floor = Decimal("100")
@@ -446,7 +479,7 @@ def comparison_curve(center: Decimal, sides: int = 5) -> list[dict[str, float | 
         ral = euro(center + offset * step)
         if ral <= 0:
             continue
-        result = calculate_net(ral)
+        result = calculate_net(ral, region_id, city_id)
         points.append(
             {
                 "ral": float(result.ral),
@@ -481,7 +514,7 @@ def parse_ral(text: str) -> Decimal:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Stima del reddito netto 2026 per un dipendente del settore privato a Milano."
+            "Stima del reddito netto 2025 per un dipendente del settore privato a Milano."
         )
     )
 
@@ -494,8 +527,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "ral", type=ral_arg, help="Retribuzione annua lorda (RAL) in euro"
     )
+    parser.add_argument(
+        "--regione",
+        default="Lombardia",
+        help="Regione o provincia autonoma di residenza",
+    )
+    parser.add_argument(
+        "--comune",
+        default="F205",
+        help="Codice catastale del comune (es. F205 = Milano)",
+    )
     args = parser.parse_args(argv)
-    print(render(calculate_net(args.ral)))
+    print(render(calculate_net(args.ral, args.regione, args.comune)))
     return 0
 
 

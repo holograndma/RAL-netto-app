@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Stipendio netto 2026 — Milano</title>
+    <title>Stipendio netto 2025 — Milano</title>
     <style>
       :root {
         --bg: #f4f1ea;
@@ -242,12 +242,24 @@
   </head>
   <body>
     <main>
-      <h1>Stipendio netto 2026</h1>
+      <h1>Stipendio netto 2025</h1>
       <p class="lede">
-        I parametri fissi sono visibili nelle caselle non modificabili.
+        Scegli regione e comune di residenza. Gli altri parametri sono fissi.
       </p>
 
       <form id="ral-form">
+        <label>
+          Regione
+          <select id="regione" name="regione" required>
+            <option value="">Seleziona</option>
+          </select>
+        </label>
+        <label>
+          Comune di residenza
+          <select id="comune" name="comune" required disabled>
+            <option value="">Seleziona una regione</option>
+          </select>
+        </label>
         <label class="ral">
           RAL in euro
           <input
@@ -263,24 +275,8 @@
         <label>
           Anno d’imposta
           <select disabled aria-disabled="true" tabindex="-1">
-            <option selected>2026</option>
-            <option>2025</option>
-          </select>
-        </label>
-        <label>
-          Comune di residenza
-          <select disabled aria-disabled="true" tabindex="-1">
-            <option selected>Milano</option>
-            <option>Roma</option>
-            <option>Torino</option>
-          </select>
-        </label>
-        <label>
-          Regione
-          <select disabled aria-disabled="true" tabindex="-1">
-            <option selected>Lombardia</option>
-            <option>Lazio</option>
-            <option>Piemonte</option>
+            <option selected>2025</option>
+            <option>2026</option>
           </select>
         </label>
         <label>
@@ -364,10 +360,17 @@
             <span><i class="swatch you"></i> La tua RAL</span>
           </p>
         </section>
+        <p class="note" id="star-note" hidden>
+          Per questo comune il MEF riporta <strong>0*</strong>: nessuna
+          addizionale comunale 2025 pubblicata (delibera assente o tributo non
+          istituito).
+        </p>
         <p class="note">
           Le percentuali delle trattenute e degli accrediti sono sulla RAL; il
-          netto annuo è la loro somma. Stima indicativa: non è un cedolino e non
-          costituisce consulenza fiscale.
+          netto annuo è la loro somma. Addizionali regionale e comunale da
+          elenchi MEF 2025 (comunale aggiornato al 13 marzo 2026). Stima
+          indicativa: non è un cedolino e non costituisce
+          consulenza fiscale.
         </p>
       </div>
     </main>

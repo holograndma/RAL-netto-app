@@ -3,12 +3,18 @@
 
   const form = document.getElementById("ral-form");
   const ralInput = document.getElementById("ral");
+  const regioneSelect = document.getElementById("regione");
+  const comuneSelect = document.getElementById("comune");
   const errorEl = document.getElementById("error");
   const results = document.getElementById("results");
   const tableBody = document.getElementById("table-body");
   const chartPanel = document.getElementById("chart-panel");
   const svg = document.getElementById("net-curve");
   const tooltip = document.getElementById("curve-tooltip");
+  const starNote = document.getElementById("star-note");
+
+  const DEFAULT_REGION = "Lombardia";
+  const DEFAULT_CITY = "F205";
 
   function setError(message) {
     errorEl.textContent = message || "";
@@ -236,17 +242,67 @@
     });
   }
 
+  function fillRegions(selected) {
+    const data = NetIncome.getAddizionali();
+    regioneSelect.replaceChildren();
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = "Seleziona";
+    regioneSelect.appendChild(blank);
+    data.regions.forEach((region) => {
+      const option = document.createElement("option");
+      option.value = region.id;
+      option.textContent = region.n;
+      regioneSelect.appendChild(option);
+    });
+    regioneSelect.value = selected || "";
+  }
+
+  function fillCities(regionId, selected) {
+    const data = NetIncome.getAddizionali();
+    comuneSelect.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    if (!regionId) {
+      placeholder.textContent = "Seleziona una regione";
+      comuneSelect.appendChild(placeholder);
+      comuneSelect.disabled = true;
+      comuneSelect.value = "";
+      return;
+    }
+    placeholder.textContent = "Seleziona un comune";
+    comuneSelect.appendChild(placeholder);
+    (data.cities[regionId] || []).forEach((city) => {
+      const option = document.createElement("option");
+      option.value = city.id;
+      option.textContent = city.n + " (" + city.p + ")";
+      comuneSelect.appendChild(option);
+    });
+    comuneSelect.disabled = false;
+    if (selected && (data.cities[regionId] || []).some((city) => city.id === selected)) {
+      comuneSelect.value = selected;
+    } else {
+      comuneSelect.value = "";
+    }
+  }
+
   function calculate(raw) {
     setError("");
     results.hidden = true;
+    starNote.hidden = true;
     try {
       const ral = NetIncome.parseRal(raw);
-      const result = NetIncome.calculateNet(ral);
+      const regionId = regioneSelect.value;
+      const cityId = comuneSelect.value;
+      const result = NetIncome.calculateNet(ral, regionId, cityId);
       renderTable(NetIncome.displayRows(result));
-      renderChart(NetIncome.comparisonCurve(ral));
+      renderChart(NetIncome.comparisonCurve(ral, regionId, cityId));
       results.hidden = false;
+      starNote.hidden = !result.cityStar;
       const url = new URL(window.location.href);
       url.searchParams.set("ral", String(raw).trim());
+      url.searchParams.set("regione", regionId);
+      url.searchParams.set("comune", cityId);
       history.replaceState(null, "", url);
     } catch (err) {
       setError(err.message || String(err));
@@ -258,9 +314,29 @@
     calculate(ralInput.value);
   });
 
-  const initial = new URLSearchParams(window.location.search).get("ral");
-  if (initial) {
-    ralInput.value = initial;
-    calculate(initial);
-  }
+  regioneSelect.addEventListener("change", () => {
+    fillCities(regioneSelect.value, "");
+  });
+
+  fetch("addizionali-2025.json")
+    .then((response) => {
+      if (!response.ok) throw new Error("Impossibile caricare le addizionali MEF");
+      return response.json();
+    })
+    .then((data) => {
+      NetIncome.setAddizionali(data);
+      const params = new URLSearchParams(window.location.search);
+      const regionId = params.get("regione") || DEFAULT_REGION;
+      const cityId = params.get("comune") || DEFAULT_CITY;
+      fillRegions(regionId);
+      fillCities(regionId, cityId);
+      const initial = params.get("ral");
+      if (initial) {
+        ralInput.value = initial;
+        calculate(initial);
+      }
+    })
+    .catch((err) => {
+      setError(err.message || String(err));
+    });
 })();

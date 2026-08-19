@@ -9,12 +9,12 @@
   const INPS_EMPLOYEE_DEN = 10000n;
   const INPS_EXTRA_NUM = 1n;
   const INPS_EXTRA_DEN = 100n;
-  const INPS_MASSIMALE = fromEuro(122295);
-  const INPS_PRIMA_FASCIA = fromEuro(56224);
+  const INPS_MASSIMALE = fromEuro(120607);
+  const INPS_PRIMA_FASCIA = fromEuro(55448);
 
   const IRPEF_BRACKETS = [
     [fromEuro(28000), 23n, 100n],
-    [fromEuro(50000), 33n, 100n],
+    [fromEuro(50000), 35n, 100n],
     [null, 43n, 100n],
   ];
 
@@ -44,17 +44,8 @@
   const CUNEO_EMP_BAND_8500 = fromEuro(8500);
   const CUNEO_EMP_BAND_15000 = fromEuro(15000);
 
-  const LOMBARDY_BRACKETS = [
-    [fromEuro(15000), 123n, 10000n],
-    [fromEuro(28000), 158n, 10000n],
-    [fromEuro(50000), 172n, 10000n],
-    [null, 173n, 10000n],
-  ];
-
-  const MILAN_NUM = 8n;
-  const MILAN_DEN = 1000n;
-  const MILAN_EXEMPTION = fromEuro(23000);
   const IRPEF_MIN_DUE = fromEuro(12);
+  let addizionali = null;
 
   function fromEuro(value) {
     const sign = value < 0 ? -1n : 1n;
@@ -173,21 +164,46 @@
     return 0n;
   }
 
-  function lombardySurcharge(imponibile) {
-    return euro(taxOnBrackets(imponibile, LOMBARDY_BRACKETS));
-  }
-
-  function milanSurcharge(imponibile) {
-    if (imponibile <= MILAN_EXEMPTION) return 0n;
-    return euro(mulRate(imponibile, MILAN_NUM, MILAN_DEN));
-  }
-
   function money(scaled) {
     return toNumber(euro(scaled));
   }
 
-  function calculateNet(ralNumber) {
+  function setAddizionali(data) {
+    addizionali = data;
+  }
+
+  function getAddizionali() {
+    return addizionali;
+  }
+
+  function resolveLocation(regionId, cityId) {
+    if (!addizionali) throw new Error("Tabella addizionali non caricata");
+    const region = addizionali.regions.find((item) => item.id === regionId);
+    if (!region) throw new Error("Seleziona una regione");
+    const city = (addizionali.cities[regionId] || []).find(
+      (item) => item.id === cityId
+    );
+    if (!city) throw new Error("Seleziona un comune della regione");
+    return { region, city };
+  }
+
+  function percentBracket(upper, percent) {
+    const hundredths = BigInt(Math.round(Number(percent) * 100));
+    return [upper == null ? null : fromEuro(upper), hundredths, 10000n];
+  }
+
+  function surchargeFromSpec(imponibile, spec) {
+    const exemption = spec.e ? fromEuro(spec.e) : 0n;
+    if (exemption > 0n && imponibile <= exemption) return 0n;
+    const brackets = spec.b.map(([upper, percent]) =>
+      percentBracket(upper, percent)
+    );
+    return euro(taxOnBrackets(imponibile, brackets));
+  }
+
+  function calculateNet(ralNumber, regionId, cityId) {
     if (ralNumber <= 0) throw new Error("La RAL deve essere positiva");
+    const { region, city } = resolveLocation(regionId, cityId);
     const ral = euro(fromEuro(ralNumber));
     const inps = employeeInps(ral);
     const imponibile = euro(ral - inps);
@@ -202,8 +218,8 @@
     let regionale = 0n;
     let comunale = 0n;
     if (irpefNetta > IRPEF_MIN_DUE) {
-      regionale = lombardySurcharge(imponibile);
-      comunale = milanSurcharge(imponibile);
+      regionale = surchargeFromSpec(imponibile, region);
+      comunale = surchargeFromSpec(imponibile, city);
     }
     const ti = trattamentoIntegrativo(imponibile, irpefLorda, detLavoro);
     const netAnnual = euro(
@@ -221,6 +237,9 @@
       irpefNetta: money(irpefNetta),
       addizionaleRegionale: money(regionale),
       addizionaleComunale: money(comunale),
+      regionName: region.n,
+      cityName: city.n,
+      cityStar: Boolean(city.star),
       trattamentoIntegrativo: money(ti),
       cuneoBonus: money(cuneoBonus),
       netAnnual: money(netAnnual),
@@ -260,8 +279,8 @@
       { label: "Maggiorazione 65 euro", calc: -result.detrazione65, withheld: null, sectionBreak: false, indent: true },
       { label: "Detrazione cuneo fiscale", calc: -result.cuneoCredit, withheld: null, sectionBreak: false, indent: true },
       { label: "IRPEF netta", calc: result.irpefNetta, withheld: -result.irpefNetta, sectionBreak: false, indent: false },
-      { label: "Addizionale regionale Lombardia", calc: null, withheld: -result.addizionaleRegionale, sectionBreak: false, indent: false },
-      { label: "Addizionale comunale Milano", calc: null, withheld: -result.addizionaleComunale, sectionBreak: false, indent: false },
+      { label: "Addizionale regionale " + result.regionName, calc: null, withheld: -result.addizionaleRegionale, sectionBreak: false, indent: false },
+      { label: "Addizionale comunale " + result.cityName, calc: null, withheld: -result.addizionaleComunale, sectionBreak: false, indent: false },
       { label: "Trattamento integrativo", calc: null, withheld: result.trattamentoIntegrativo, sectionBreak: false, indent: false },
       { label: "Somma esente cuneo fiscale", calc: null, withheld: result.cuneoBonus, sectionBreak: true, indent: false },
       { label: "Netto annuo", calc: null, withheld: result.netAnnual, sectionBreak: false, indent: false },
@@ -313,7 +332,7 @@
     return money(euro(fromEuro(magnitude * 10)));
   }
 
-  function comparisonCurve(center, sides) {
+  function comparisonCurve(center, regionId, cityId, sides) {
     if (sides == null) sides = 5;
     let step = prettyStep(center * 0.08);
     const floor = 100;
@@ -330,7 +349,7 @@
     for (let offset = -sides; offset <= sides; offset += 1) {
       const ral = money(euro(fromEuro(center + offset * step)));
       if (ral <= 0) continue;
-      const result = calculateNet(ral);
+      const result = calculateNet(ral, regionId, cityId);
       points.push({
         ral: result.ral,
         net: result.netAnnual,
@@ -361,6 +380,9 @@
 
   const api = {
     MONTHS,
+    setAddizionali,
+    getAddizionali,
+    resolveLocation,
     calculateNet,
     displayRows,
     comparisonCurve,
