@@ -1,37 +1,23 @@
 from __future__ import annotations
 
-from flask import Flask, render_template, request
+from pathlib import Path
 
-from italy_net_income import calculate_net, comparison_curve, display_rows, parse_ral
+from flask import Flask, send_from_directory
+
+ROOT = Path(__file__).resolve().parent
+PUBLIC = ROOT / "public"
 
 app = Flask(__name__)
 
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/")
 def index():
-    ral_input = request.values.get("ral", "").strip()
-    error = None
-    rows = None
-    result = None
-    curve = None
+    return send_from_directory(PUBLIC, "index.html")
 
-    if ral_input:
-        try:
-            ral = parse_ral(ral_input)
-            result = calculate_net(ral)
-            rows = display_rows(result)
-            curve = comparison_curve(ral)
-        except ValueError as exc:
-            error = str(exc)
 
-    return render_template(
-        "index.html",
-        ral_input=ral_input,
-        error=error,
-        rows=rows,
-        result=result,
-        curve=curve,
-    )
+@app.route("/<path:filename>")
+def static_files(filename):
+    return send_from_directory(PUBLIC, filename)
 
 
 if __name__ == "__main__":

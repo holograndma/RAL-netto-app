@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stipendio netto 2026 — Milano</title>
+    <style>
+      :root {
+        --bg: #f4f1ea;
+        --ink: #1c1916;
+        --muted: #5c564e;
+        --line: #d9d2c5;
+        --paper: #fffcf7;
+        --accent: #1f4d3a;
+        --accent-soft: #e7f0eb;
+        --danger: #8a2b2b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.45;
+      }
+
+      main {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 2.5rem 1.25rem 4rem;
+      }
+
+      h1 {
+        font-size: 1.85rem;
+        font-weight: 600;
+        margin: 0 0 0.35rem;
+        letter-spacing: -0.02em;
+      }
+
+      .lede {
+        margin: 0 0 1.75rem;
+        color: var(--muted);
+      }
+
+      form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.85rem 1rem;
+        align-items: end;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        padding: 1.1rem 1.15rem 1.2rem;
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        font-size: 0.92rem;
+        min-width: 0;
+      }
+
+      label.ral {
+        grid-column: 1 / -1;
+      }
+
+      .actions {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      input,
+      select {
+        font: inherit;
+        font-size: 1.05rem;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        width: 100%;
+        appearance: auto;
+      }
+
+      input:disabled,
+      select:disabled {
+        background: #ebe6dc;
+        color: var(--muted);
+        cursor: not-allowed;
+        opacity: 1;
+      }
+
+      button {
+        font: inherit;
+        background: var(--accent);
+        color: #f7faf8;
+        border: 0;
+        padding: 0.62rem 1.2rem;
+        cursor: pointer;
+      }
+
+      button:hover {
+        filter: brightness(1.08);
+      }
+
+      .error {
+        color: var(--danger);
+        margin: 0 0 1rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--paper);
+        border: 1px solid var(--line);
+      }
+
+      th,
+      td {
+        padding: 0.55rem 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid var(--line);
+        vertical-align: baseline;
+      }
+
+      th {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      td.num,
+      th.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-family: "Iowan Old Style", "Palatino Linotype", Palatino, ui-monospace, monospace;
+        white-space: nowrap;
+      }
+
+      tr.indent td:first-child {
+        padding-left: 1.7rem;
+        color: var(--muted);
+      }
+
+      tr.break td {
+        border-bottom-width: 2px;
+      }
+
+      tr.emphasis {
+        background: var(--accent-soft);
+        font-weight: 600;
+      }
+
+      .note {
+        margin: 1.1rem 0 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .chart-panel {
+        margin-top: 1.75rem;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        padding: 1rem 1.1rem 1.15rem;
+      }
+
+      .chart-panel h2 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem;
+      }
+
+      .chart-caption {
+        margin: 0 0 0.85rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .chart-wrap {
+        position: relative;
+      }
+
+      .chart-wrap svg {
+        display: block;
+        width: 100%;
+        height: 280px;
+      }
+
+      .chart-tooltip {
+        position: absolute;
+        pointer-events: none;
+        background: var(--ink);
+        color: var(--paper);
+        font-size: 0.82rem;
+        padding: 0.4rem 0.55rem;
+        min-width: 9.5rem;
+        opacity: 0;
+        transform: translate(-50%, -120%);
+        transition: opacity 0.12s ease;
+      }
+
+      .chart-legend {
+        display: flex;
+        gap: 1.1rem;
+        margin: 0.7rem 0 0;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .chart-legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      .swatch {
+        width: 1.1rem;
+        height: 0;
+        border-top: 2px solid var(--accent);
+      }
+
+      .swatch.pct {
+        border-top-style: dashed;
+        border-top-color: var(--muted);
+      }
+
+      .swatch.you {
+        width: 0.55rem;
+        height: 0.55rem;
+        border: 0;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Stipendio netto 2026</h1>
+      <p class="lede">
+        I parametri fissi sono visibili nelle caselle non modificabili.
+      </p>
+
+      <form id="ral-form">
+        <label class="ral">
+          RAL in euro
+          <input
+            id="ral"
+            type="text"
+            name="ral"
+            inputmode="decimal"
+            placeholder="35000"
+            required
+            autofocus
+          />
+        </label>
+        <label>
+          Anno d’imposta
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>2026</option>
+            <option>2025</option>
+          </select>
+        </label>
+        <label>
+          Comune di residenza
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>Milano</option>
+            <option>Roma</option>
+            <option>Torino</option>
+          </select>
+        </label>
+        <label>
+          Regione
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>Lombardia</option>
+            <option>Lazio</option>
+            <option>Piemonte</option>
+          </select>
+        </label>
+        <label>
+          Rapporto di lavoro
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>Tempo pieno, indeterminato</option>
+            <option>Tempo determinato</option>
+            <option>Part-time</option>
+          </select>
+        </label>
+        <label>
+          Settore
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>Privato</option>
+            <option>Pubblico</option>
+          </select>
+        </label>
+        <label>
+          Mensilità
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>13</option>
+            <option>12</option>
+            <option>14</option>
+          </select>
+        </label>
+        <label>
+          Familiari a carico
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>Nessuno</option>
+            <option>Coniuge</option>
+            <option>Figli</option>
+          </select>
+        </label>
+        <label>
+          Altre detrazioni
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>Nessuna</option>
+            <option>Mutuo prima casa</option>
+            <option>Spese sanitarie</option>
+          </select>
+        </label>
+        <div class="actions">
+          <button type="submit">Calcola</button>
+        </div>
+      </form>
+
+      <p class="error" id="error" hidden></p>
+
+      <div id="results" hidden>
+        <table>
+          <thead>
+            <tr>
+              <th>Voce</th>
+              <th class="num">Calcolo</th>
+              <th class="num">Trattenute</th>
+              <th class="num">% sul lordo</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+        <section class="chart-panel" id="chart-panel">
+          <h2>Netto intorno alla tua RAL</h2>
+          <p class="chart-caption">
+            La tua retribuzione è il punto in evidenza, al centro. La curva
+            continua è il netto annuo; quella tratteggiata è la percentuale sul
+            lordo, per confrontarti con chi guadagna un po’ di più o un po’ di
+            meno.
+          </p>
+          <div class="chart-wrap">
+            <svg
+              id="net-curve"
+              viewBox="0 0 800 280"
+              role="img"
+              aria-label="Curva netto e percentuale sul lordo"
+            ></svg>
+            <div class="chart-tooltip" id="curve-tooltip"></div>
+          </div>
+          <p class="chart-legend">
+            <span><i class="swatch"></i> Netto annuo</span>
+            <span><i class="swatch pct"></i> % sul lordo</span>
+            <span><i class="swatch you"></i> La tua RAL</span>
+          </p>
+        </section>
+        <p class="note">
+          Le percentuali delle trattenute e degli accrediti sono sulla RAL; il
+          netto annuo è la loro somma. Stima indicativa: non è un cedolino e non
+          costituisce consulenza fiscale.
+        </p>
+      </div>
+    </main>
+    <script src="net-income.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
