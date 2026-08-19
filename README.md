@@ -1,6 +1,6 @@
-# Stipendio netto 2025 (Milano)
+# Stipendio netto 2025
 
-Estimator of take-home pay for a full-time, open-ended private-sector employee in Milan. Enter a RAL; the rest of the scenario is fixed (13 months, no dependents, no extra deductions).
+Estimator of take-home pay for a full-time, open-ended private-sector employee in Italy. Enter a RAL; the rest of the scenario is fixed (13 months, no dependents, no extra deductions).
 
 **Use the app:** https://holograndma.github.io/RAL-netto-app/
 
