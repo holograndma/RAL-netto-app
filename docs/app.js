@@ -16,6 +16,24 @@
   const DEFAULT_REGION = "Lombardia";
   const DEFAULT_CITY = "F205";
 
+  const ASSET_BASE = (function () {
+    const src = document.currentScript && document.currentScript.src;
+    if (src) return new URL(".", src);
+    const url = new URL(document.baseURI);
+    const path = url.pathname || "/";
+    if (!path.endsWith("/")) {
+      const last = path.substring(path.lastIndexOf("/") + 1);
+      url.pathname = last.includes(".")
+        ? path.slice(0, path.lastIndexOf("/") + 1)
+        : path + "/";
+    }
+    return url;
+  })();
+
+  function assetUrl(name) {
+    return new URL(name, ASSET_BASE).href;
+  }
+
   function setError(message) {
     errorEl.textContent = message || "";
     errorEl.hidden = !message;
@@ -244,6 +262,9 @@
 
   function fillRegions(selected) {
     const data = NetIncome.getAddizionali();
+    if (!data || !Array.isArray(data.regions)) {
+      throw new Error("Tabella addizionali non caricata");
+    }
     regioneSelect.replaceChildren();
     const blank = document.createElement("option");
     blank.value = "";
@@ -260,6 +281,9 @@
 
   function fillCities(regionId, selected) {
     const data = NetIncome.getAddizionali();
+    if (!data || !data.cities) {
+      throw new Error("Tabella addizionali non caricata");
+    }
     comuneSelect.replaceChildren();
     const placeholder = document.createElement("option");
     placeholder.value = "";
@@ -318,12 +342,15 @@
     fillCities(regioneSelect.value, "");
   });
 
-  fetch("addizionali-2025.json")
+  fetch(assetUrl("addizionali-2025.json"))
     .then((response) => {
       if (!response.ok) throw new Error("Impossibile caricare le addizionali MEF");
       return response.json();
     })
     .then((data) => {
+      if (!data || !Array.isArray(data.regions) || !data.cities) {
+        throw new Error("Impossibile caricare le addizionali MEF");
+      }
       NetIncome.setAddizionali(data);
       const params = new URLSearchParams(window.location.search);
       const regionId = params.get("regione") || DEFAULT_REGION;

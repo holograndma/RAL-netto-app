@@ -3,6 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      (function () {
+        var path = location.pathname || "/";
+        if (path.charAt(path.length - 1) !== "/") {
+          var last = path.substring(path.lastIndexOf("/") + 1);
+          path =
+            last.indexOf(".") === -1
+              ? path + "/"
+              : path.slice(0, path.lastIndexOf("/") + 1);
+        }
+        var base = document.createElement("base");
+        base.href = path;
+        document.head.appendChild(base);
+      })();
+    </script>
     <title>Stipendio netto 2025 — Milano</title>
     <style>
       :root {
