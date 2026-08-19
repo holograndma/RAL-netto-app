@@ -5,7 +5,7 @@ from pathlib import Path
 from flask import Flask, send_from_directory
 
 ROOT = Path(__file__).resolve().parent
-PUBLIC = ROOT / "public"
+PUBLIC = ROOT / "docs"
 
 app = Flask(__name__)
 

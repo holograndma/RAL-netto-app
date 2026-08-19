@@ -4,7 +4,7 @@ Estimator of take-home pay for a full-time, open-ended private-sector employee i
 
 **Use the app:** https://holograndma.github.io/RAL-netto-app/
 
-The source is public at [holograndma/RAL-netto-app](https://github.com/holograndma/RAL-netto-app). The calculator runs entirely in the browser (`public/`).
+The source is public at [holograndma/RAL-netto-app](https://github.com/holograndma/RAL-netto-app). The calculator runs entirely in the browser (`docs/`).
 
 ## Run locally
 
@@ -12,7 +12,7 @@ The source is public at [holograndma/RAL-netto-app](https://github.com/hologrand
 ./run.sh
 ```
 
-Then open [http://127.0.0.1:5000](http://127.0.0.1:5000), or open `public/index.html` in a browser.
+Then open [http://127.0.0.1:5000](http://127.0.0.1:5000), or open `docs/index.html` in a browser.
 
 CLI:
 
