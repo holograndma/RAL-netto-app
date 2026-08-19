@@ -4,9 +4,15 @@ Estimator of take-home pay for a full-time, open-ended private-sector employee i
 
 This Origin copy is **not public**. Access is managed from the [Origin repo page](https://cursor.com/codebase/holograndma/RAL-netto-app).
 
-Origin does not host a running app the way GitHub Pages does. The calculator is a static page in `public/`, so it can be deployed from this repo with [Vercel for Origin](https://vercel.com/docs/git/vercel-for-origin) (Settings → Apps on the Origin repo). Origin repositories are private and need a paid Vercel team, not Hobby.
+Origin does not host a running app the way GitHub Pages does. The calculator is a static page in `public/`. Deploy it with [Vercel for Origin](https://vercel.com/docs/git/vercel-for-origin) from a **paid Vercel team** (Hobby cannot deploy private Origin repos).
 
-After Vercel is connected, put the live URL here and in the repo README so people who can see the repo can open the app in one click.
+If you click **Reinstall** on the Vercel app in Origin, the old Vercel project loses Git access and can sit on a loading screen. Reconnect instead of waiting:
+
+1. Origin: [Codebase Apps](https://cursor.com/codebase/settings/apps) — Vercel should show as installed (install once; do not reinstall again).
+2. Vercel: [New Project](https://vercel.com/new) → **Continue with Origin** → select `holograndma/RAL-netto-app`.
+3. Framework preset **Other**, output directory `public`, build command empty.
+
+`vercel.json` already sets those so Vercel does not treat `app.py` as Flask.
 
 ## Open the code
 
