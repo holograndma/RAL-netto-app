@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stipendio netto 2026 — Milano</title>
+    <style>
+      :root {
+        --bg: #f4f1ea;
+        --ink: #1c1916;
+        --muted: #5c564e;
+        --line: #d9d2c5;
+        --paper: #fffcf7;
+        --accent: #1f4d3a;
+        --accent-soft: #e7f0eb;
+        --danger: #8a2b2b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.45;
+      }
+
+      main {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 2.5rem 1.25rem 4rem;
+      }
+
+      h1 {
+        font-size: 1.85rem;
+        font-weight: 600;
+        margin: 0 0 0.35rem;
+        letter-spacing: -0.02em;
+      }
+
+      .lede {
+        margin: 0 0 1.75rem;
+        color: var(--muted);
+      }
+
+      form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.85rem 1rem;
+        align-items: end;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        padding: 1.1rem 1.15rem 1.2rem;
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        font-size: 0.92rem;
+        min-width: 0;
+      }
+
+      label.ral {
+        grid-column: 1 / -1;
+      }
+
+      .actions {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      input,
+      select {
+        font: inherit;
+        font-size: 1.05rem;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        width: 100%;
+        appearance: auto;
+      }
+
+      input:disabled,
+      select:disabled {
+        background: #ebe6dc;
+        color: var(--muted);
+        cursor: not-allowed;
+        opacity: 1;
+      }
+
+      button {
+        font: inherit;
+        background: var(--accent);
+        color: #f7faf8;
+        border: 0;
+        padding: 0.62rem 1.2rem;
+        cursor: pointer;
+      }
+
+      button:hover {
+        filter: brightness(1.08);
+      }
+
+      .error {
+        color: var(--danger);
+        margin: 0 0 1rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--paper);
+        border: 1px solid var(--line);
+      }
+
+      th,
+      td {
+        padding: 0.55rem 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid var(--line);
+        vertical-align: baseline;
+      }
+
+      th {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      td.num,
+      th.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-family: "Iowan Old Style", "Palatino Linotype", Palatino, ui-monospace, monospace;
+        white-space: nowrap;
+      }
+
+      tr.indent td:first-child {
+        padding-left: 1.7rem;
+        color: var(--muted);
+      }
+
+      tr.break td {
+        border-bottom-width: 2px;
+      }
+
+      tr.emphasis {
+        background: var(--accent-soft);
+        font-weight: 600;
+      }
+
+      .note {
+        margin: 1.1rem 0 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .chart-panel {
+        margin-top: 1.75rem;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        padding: 1rem 1.1rem 1.15rem;
+      }
+
+      .chart-panel h2 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem;
+      }
+
+      .chart-caption {
+        margin: 0 0 0.85rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .chart-wrap {
+        position: relative;
+      }
+
+      .chart-wrap svg {
+        display: block;
+        width: 100%;
+        height: 280px;
+      }
+
+      .chart-tooltip {
+        position: absolute;
+        pointer-events: none;
+        background: var(--ink);
+        color: var(--paper);
+        font-size: 0.82rem;
+        padding: 0.4rem 0.55rem;
+        min-width: 9.5rem;
+        opacity: 0;
+        transform: translate(-50%, -120%);
+        transition: opacity 0.12s ease;
+      }
+
+      .chart-legend {
+        display: flex;
+        gap: 1.1rem;
+        margin: 0.7rem 0 0;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .chart-legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      .swatch {
+        width: 1.1rem;
+        height: 0;
+        border-top: 2px solid var(--accent);
+      }
+
+      .swatch.pct {
+        border-top-style: dashed;
+        border-top-color: var(--muted);
+      }
+
+      .swatch.you {
+        width: 0.55rem;
+        height: 0.55rem;
+        border: 0;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Stipendio netto 2026</h1>
+      <p class="lede">
+        I parametri fissi sono visibili nelle caselle non modificabili.
+      </p>
+
+      <form method="post" action="/">
+        <label class="ral">
+          RAL in euro
+          <input
+            type="text"
+            name="ral"
+            inputmode="decimal"
+            placeholder="35000"
+            value="{{ ral_input }}"
+            required
+            autofocus
+          />
+        </label>
+        <label>
+          Anno d’imposta
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>2026</option>
+            <option>2025</option>
+          </select>
+        </label>
+        <label>
+          Comune di residenza
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>Milano</option>
+            <option>Roma</option>
+            <option>Torino</option>
+          </select>
+        </label>
+        <label>
+          Regione
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>Lombardia</option>
+            <option>Lazio</option>
+            <option>Piemonte</option>
+          </select>
+        </label>
+        <label>
+          Rapporto di lavoro
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>Tempo pieno, indeterminato</option>
+            <option>Tempo determinato</option>
+            <option>Part-time</option>
+          </select>
+        </label>
+        <label>
+          Settore
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>Privato</option>
+            <option>Pubblico</option>
+          </select>
+        </label>
+        <label>
+          Mensilità
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>13</option>
+            <option>12</option>
+            <option>14</option>
+          </select>
+        </label>
+        <label>
+          Familiari a carico
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>Nessuno</option>
+            <option>Coniuge</option>
+            <option>Figli</option>
+          </select>
+        </label>
+        <label>
+          Altre detrazioni
+          <select disabled aria-disabled="true" tabindex="-1">
+            <option selected>Nessuna</option>
+            <option>Mutuo prima casa</option>
+            <option>Spese sanitarie</option>
+          </select>
+        </label>
+        <div class="actions">
+          <button type="submit">Calcola</button>
+        </div>
+      </form>
+
+      {% if error %}
+      <p class="error">{{ error }}</p>
+      {% endif %}
+
+      {% if rows %}
+      <table>
+        <thead>
+          <tr>
+            <th>Voce</th>
+            <th class="num">Calcolo</th>
+            <th class="num">Trattenute</th>
+            <th class="num">% sul lordo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr
+            class="{% if row.indent %}indent{% endif %}{% if row.section_break %} break{% endif %}{% if row.emphasis %} emphasis{% endif %}"
+          >
+            <td>{{ row.label }}</td>
+            <td class="num">{{ row.calc }}</td>
+            <td class="num">{{ row.withheld }}</td>
+            <td class="num">{{ row.pct }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if curve %}
+      <section class="chart-panel">
+        <h2>Netto intorno alla tua RAL</h2>
+        <p class="chart-caption">
+          La tua retribuzione è il punto in evidenza, al centro. La curva
+          continua è il netto annuo; quella tratteggiata è la percentuale sul
+          lordo, per confrontarti con chi guadagna un po’ di più o un po’ di
+          meno.
+        </p>
+        <div class="chart-wrap">
+          <svg id="net-curve" viewBox="0 0 800 280" role="img" aria-label="Curva netto e percentuale sul lordo"></svg>
+          <div class="chart-tooltip" id="curve-tooltip"></div>
+        </div>
+        <p class="chart-legend">
+          <span><i class="swatch"></i> Netto annuo</span>
+          <span><i class="swatch pct"></i> % sul lordo</span>
+          <span><i class="swatch you"></i> La tua RAL</span>
+        </p>
+      </section>
+      <script id="curve-data" type="application/json">{{ curve | tojson }}</script>
+      {% endif %}
+      <p class="note">
+        Le percentuali delle trattenute e degli accrediti sono sulla RAL; il
+        netto annuo è la loro somma. Stima indicativa: non è un cedolino e non
+        costituisce consulenza fiscale.
+      </p>
+      {% endif %}
+    </main>
+    <script>
+      (function () {
+        const dataNode = document.getElementById("curve-data");
+        const svg = document.getElementById("net-curve");
+        const tooltip = document.getElementById("curve-tooltip");
+        if (!dataNode || !svg || !tooltip) return;
+
+        const points = JSON.parse(dataNode.textContent);
+        if (!points.length) return;
+
+        const pad = { top: 28, right: 52, bottom: 42, left: 64 };
+        const width = 800;
+        const height = 280;
+        const innerW = width - pad.left - pad.right;
+        const innerH = height - pad.top - pad.bottom;
+        const ns = "http://www.w3.org/2000/svg";
+
+        const rals = points.map((p) => p.ral);
+        const nets = points.map((p) => p.net);
+        const pcts = points.map((p) => p.pct);
+        const xMin = Math.min(...rals);
+        const xMax = Math.max(...rals);
+        const yMin = Math.min(...nets) * 0.92;
+        const yMax = Math.max(...nets) * 1.04;
+        const pMin = Math.min(...pcts) - 3;
+        const pMax = Math.max(...pcts) + 3;
+
+        const x = (v) =>
+          pad.left + ((v - xMin) / (xMax - xMin || 1)) * innerW;
+        const yNet = (v) =>
+          pad.top + innerH - ((v - yMin) / (yMax - yMin || 1)) * innerH;
+        const yPct = (v) =>
+          pad.top + innerH - ((v - pMin) / (pMax - pMin || 1)) * innerH;
+
+        function el(name, attrs, text) {
+          const node = document.createElementNS(ns, name);
+          Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, v));
+          if (text != null) node.textContent = text;
+          svg.appendChild(node);
+          return node;
+        }
+
+        function euro(n) {
+          return (
+            "€" +
+            Math.round(n).toLocaleString("it-IT", { maximumFractionDigits: 0 })
+          );
+        }
+
+        el("rect", {
+          x: 0,
+          y: 0,
+          width,
+          height,
+          fill: "transparent",
+        });
+
+        for (let i = 0; i <= 4; i++) {
+          const t = i / 4;
+          const netVal = yMin + (yMax - yMin) * (1 - t);
+          const y = pad.top + innerH * t;
+          el("line", {
+            x1: pad.left,
+            y1: y,
+            x2: pad.left + innerW,
+            y2: y,
+            stroke: "#d9d2c5",
+            "stroke-width": "1",
+          });
+          el(
+            "text",
+            {
+              x: pad.left - 8,
+              y: y + 4,
+              "text-anchor": "end",
+              fill: "#5c564e",
+              "font-size": "11",
+            },
+            euro(netVal)
+          );
+          const pctVal = pMax - (pMax - pMin) * t;
+          el(
+            "text",
+            {
+              x: pad.left + innerW + 8,
+              y: y + 4,
+              "text-anchor": "start",
+              fill: "#5c564e",
+              "font-size": "11",
+            },
+            pctVal.toFixed(0) + "%"
+          );
+        }
+
+        const selected = points.find((p) => p.selected) || points[Math.floor(points.length / 2)];
+        el("line", {
+          x1: x(selected.ral),
+          y1: pad.top,
+          x2: x(selected.ral),
+          y2: pad.top + innerH,
+          stroke: "#1f4d3a",
+          "stroke-width": "1",
+          "stroke-dasharray": "3 4",
+          opacity: "0.45",
+        });
+
+        const netLine = points
+          .map((p, i) => (i === 0 ? "M" : "L") + x(p.ral) + " " + yNet(p.net))
+          .join(" ");
+        const area =
+          netLine +
+          " L" +
+          x(points[points.length - 1].ral) +
+          " " +
+          (pad.top + innerH) +
+          " L" +
+          x(points[0].ral) +
+          " " +
+          (pad.top + innerH) +
+          " Z";
+        el("path", { d: area, fill: "#e7f0eb", opacity: "0.85" });
+        el("path", {
+          d: netLine,
+          fill: "none",
+          stroke: "#1f4d3a",
+          "stroke-width": "2.2",
+        });
+
+        const pctLine = points
+          .map((p, i) => (i === 0 ? "M" : "L") + x(p.ral) + " " + yPct(p.pct))
+          .join(" ");
+        el("path", {
+          d: pctLine,
+          fill: "none",
+          stroke: "#5c564e",
+          "stroke-width": "1.7",
+          "stroke-dasharray": "5 4",
+        });
+
+        points.forEach((p, i) => {
+          el("circle", {
+            cx: x(p.ral),
+            cy: yNet(p.net),
+            r: p.selected ? 6 : 3.2,
+            fill: p.selected ? "#1f4d3a" : "#fffcf7",
+            stroke: "#1f4d3a",
+            "stroke-width": p.selected ? "2" : "1.4",
+          });
+          if (p.selected || i % 2 === 0) {
+            el(
+              "text",
+              {
+                x: x(p.ral),
+                y: height - 12,
+                "text-anchor": "middle",
+                fill: p.selected ? "#1c1916" : "#5c564e",
+                "font-size": p.selected ? "11" : "10",
+                "font-weight": p.selected ? "600" : "400",
+              },
+              euro(p.ral)
+            );
+          }
+        });
+
+        const hit = el("rect", {
+          x: pad.left,
+          y: pad.top,
+          width: innerW,
+          height: innerH,
+          fill: "transparent",
+        });
+
+        function nearest(clientX) {
+          const rect = svg.getBoundingClientRect();
+          const svgX = ((clientX - rect.left) / rect.width) * width;
+          let best = points[0];
+          let bestDist = Infinity;
+          points.forEach((p) => {
+            const d = Math.abs(x(p.ral) - svgX);
+            if (d < bestDist) {
+              best = p;
+              bestDist = d;
+            }
+          });
+          return best;
+        }
+
+        function show(p, clientX) {
+          const rect = svg.getBoundingClientRect();
+          tooltip.innerHTML =
+            "<strong>" +
+            p.ral_label +
+            "</strong><br>Netto " +
+            p.net_label +
+            "<br>" +
+            p.pct_label +
+            " sul lordo";
+          tooltip.style.left =
+            ((x(p.ral) / width) * rect.width) + "px";
+          tooltip.style.top = ((yNet(p.net) / height) * rect.height) + "px";
+          tooltip.style.opacity = "1";
+        }
+
+        hit.addEventListener("mousemove", (event) => {
+          show(nearest(event.clientX));
+        });
+        hit.addEventListener("mouseleave", () => {
+          tooltip.style.opacity = "0";
+        });
+      })();
+    </script>
+  </body>
+</html>

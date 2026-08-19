@@ -1,0 +1,24 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Install and run stipendio netto",
+      "type": "shell",
+      "command": "python3 -m venv .venv && .venv/bin/pip install -q -r requirements.txt && .venv/bin/python app.py",
+      "problemMatcher": {
+        "owner": "flask",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Running on"
+        }
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ]
+}
